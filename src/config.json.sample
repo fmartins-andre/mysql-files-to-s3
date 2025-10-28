@@ -1,0 +1,12 @@
+{
+  "mysql": {
+    "query": "SELECT 'myQuery...'",
+    "connectionParameters": {
+      "host": "my.nice.ip.address",
+      "port": "myPort",
+      "database": "myDatabase",
+      "user": "myUser",
+      "password": "myPassword"
+    }
+  }
+}

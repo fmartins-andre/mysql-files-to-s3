@@ -1,0 +1,28 @@
+{
+  "name": "mysql-files-to-s3",
+  "version": "1.0.0",
+  "description": "A app/micro-service to upload mysql blobs/files to any s3 compatible storage and get its individual links",
+  "main": "src/index.js",
+  "author": "André Martins <fmartins.andre@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node ."
+  },
+  "engines": {
+    "npm": "use-yarn",
+    "yarn": ">=1.22 <2",
+    "node": ">=22.21 <23"
+  },
+  "dependencies": {
+    "crypto-js": "^4.0.0",
+    "minio": "^8.0.6",
+    "mongodb": "^3.6.2",
+    "mysql2": "^2.1.0",
+    "node-gzip": "^1.1.2",
+    "xhr2": "^0.2.0",
+    "zlib": "^1.0.5"
+  },
+  "devDependencies": {
+    "prettier": "^2.1.1"
+  }
+}
