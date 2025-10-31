@@ -22,7 +22,7 @@
   "keywords": [
     "mysql",
     "s3",
-    "firebase",
+    "minio",
     "file-upload",
     "typescript",
     "microservice"

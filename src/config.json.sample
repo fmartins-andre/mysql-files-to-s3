@@ -1,12 +1,34 @@
 {
+  "crypto_key": "your-secret-encryption-key",
   "mysql": {
-    "query": "SELECT 'myQuery...'",
+    "query": "SELECT 'your blob query here...'",
     "connectionParameters": {
-      "host": "my.nice.ip.address",
-      "port": "myPort",
-      "database": "myDatabase",
-      "user": "myUser",
-      "password": "myPassword"
+      "host": "your-mysql-host",
+      "port": 3306,
+      "database": "your-database",
+      "user": "your-username",
+      "password": "your-password"
+    }
+  },
+  "mongo": {
+    "db": "your-database-name",
+    "collection": "your-collection-name",
+    "connectionParameters": {
+      "uri": "mongodb+srv://username:password@cluster.mongodb.net/",
+      "options": {
+        "useNewUrlParser": true,
+        "useUnifiedTopology": true
+      }
+    }
+  },
+  "s3": {
+    "fileRetention": 30,
+    "defaultPrefix": "documents",
+    "bucket": "your-bucket-name",
+    "connectionParameters": {
+      "uri": "https://your-s3-endpoint.com",
+      "user": "your-access-key",
+      "password": "your-secret-key"
     }
   }
 }

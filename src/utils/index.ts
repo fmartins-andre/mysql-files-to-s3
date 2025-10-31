@@ -4,7 +4,6 @@
  */
 
 export { daysBetweenDates } from "./daysBetweenDates"
-export { emptyFirebaseStorage } from "./emptyFirebaseStorage"
 export { encrypt } from "./encrypt"
 export { default as rtfHeader } from "./rtfHeaderRaw"
 
@@ -21,7 +20,6 @@ export {
   errorHandler,
   handleDatabaseError,
   handleFileError,
-  handleFirebaseError,
   handleUploadError,
   handleConfigError,
   handleCryptoError,

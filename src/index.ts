@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises"
 import path from "path"
 
-import firebaseData from "./firebaseData"
+import s3Data from "./s3Data"
 import getData from "./getData"
 import convertFiles from "./convertFiles"
 import uploadFiles from "./uploadFiles"
@@ -35,14 +35,10 @@ async function main() {
 
   try {
     const config = await readFile(configFile, "utf-8")
-    const { crypto_key, mysql, mongo, firebaseConfig, firebaseServiceAccount } =
-      JSON.parse(config)
+    const { crypto_key, mysql, mongo, s3 } = JSON.parse(config)
     console.log(`::: Application: Configuration file loaded.`)
 
-    const remoteData = await firebaseData(
-      firebaseConfig,
-      firebaseServiceAccount
-    )
+    const remoteData = await s3Data(s3, s3.connectionParameters)
 
     const mysqlData = await getData(mysql)
     if (!mysqlData) {

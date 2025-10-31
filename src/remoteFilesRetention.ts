@@ -1,5 +1,6 @@
+import { Client } from "minio"
 import { daysBetweenDates } from "./utils/daysBetweenDates"
-import { LocalDataRow, FirebaseFile, FirebaseData } from "./types/shared"
+import { LocalDataRow } from "./types/shared"
 
 /**
  * Service for managing remote file retention policies
@@ -14,6 +15,19 @@ interface FileDeletionRule {
   isNotInLocal: boolean
 }
 
+interface S3Data {
+  client: Client
+  bucket: string
+  retention: number
+  prefix: string
+  files: Array<{
+    name: string
+    lastModified: string | undefined
+    size: number | undefined
+  }>
+  filesNames: string[]
+}
+
 /**
  * Processes individual file for potential deletion
  */
@@ -21,23 +35,31 @@ class FileRetentionProcessor {
   private readonly localFiles: Set<string>
   private readonly retentionDays: number
   private readonly prefix: string
+  private readonly client: Client
+  private readonly bucket: string
 
   constructor(
     localData: LocalDataRow[],
     retentionDays: number,
-    prefix: string
+    prefix: string,
+    client: Client,
+    bucket: string
   ) {
     this.localFiles = new Set(localData.map(row => `${row.id}.pdf`))
     this.retentionDays = retentionDays
     this.prefix = prefix
+    this.client = client
+    this.bucket = bucket
   }
 
   /**
    * Check if file meets deletion criteria
    */
-  private async evaluateDeletionCriteria(
-    file: FirebaseFile
-  ): Promise<FileDeletionRule> {
+  private async evaluateDeletionCriteria(file: {
+    name: string
+    lastModified: string | undefined
+    size: number | undefined
+  }): Promise<FileDeletionRule> {
     const isOutdated = await this.checkFileAge(file)
     const isNotInLocal = !this.localFiles.has(file.name)
 
@@ -55,12 +77,14 @@ class FileRetentionProcessor {
   /**
    * Check if file is older than retention period
    */
-  private async checkFileAge(file: FirebaseFile): Promise<boolean> {
+  private async checkFileAge(file: {
+    name: string
+    lastModified: string | undefined
+  }): Promise<boolean> {
     try {
-      const metadata = await file.getMetadata()
-      if (!metadata?.updated) return false
+      if (!file.lastModified) return false
 
-      const dateStr = metadata.updated.split("T")[0]
+      const dateStr = file.lastModified.split("T")[0]
       if (!dateStr) return false
 
       const fileDate = new Date(dateStr).getTime()
@@ -77,11 +101,12 @@ class FileRetentionProcessor {
   /**
    * Delete file and return its ID if successful
    */
-  private async deleteFile(file: FirebaseFile): Promise<string | null> {
+  private async deleteFile(file: { name: string }): Promise<string | null> {
     try {
-      await file.delete()
+      const objectName = `${this.prefix}/${file.name}`
+      await this.client.removeObject(this.bucket, objectName)
       console.log(
-        `::: Firebase: The "${this.prefix}/${file.name}" file was removed from cloud storage.`
+        `::: S3: The "${objectName}" file was removed from cloud storage.`
       )
       return this.extractFileId(file.name)
     } catch (error) {
@@ -93,7 +118,11 @@ class FileRetentionProcessor {
   /**
    * Process single file for retention check
    */
-  async processFile(file: FirebaseFile): Promise<string | null> {
+  async processFile(file: {
+    name: string
+    lastModified: string | undefined
+    size: number | undefined
+  }): Promise<string | null> {
     const { isOutdated, isNotInLocal } = await this.evaluateDeletionCriteria(
       file
     )
@@ -112,14 +141,20 @@ class FileRetentionProcessor {
  */
 const remoteFileRetention = async (
   localData: LocalDataRow[],
-  firebaseData: FirebaseData
+  s3Data: S3Data
 ): Promise<string[]> => {
-  const { retention, prefix, files } = firebaseData
-  const processor = new FileRetentionProcessor(localData, retention, prefix)
+  const { retention, prefix, files, client, bucket } = s3Data
+  const processor = new FileRetentionProcessor(
+    localData,
+    retention,
+    prefix,
+    client,
+    bucket
+  )
 
   // Process all files in parallel for better performance
   const deletionResults = await Promise.all(
-    files.items.map(file => processor.processFile(file))
+    files.map(file => processor.processFile(file))
   )
 
   // Filter and return only successful deletions

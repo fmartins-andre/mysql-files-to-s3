@@ -9,7 +9,7 @@
 export enum ErrorType {
   DATABASE_CONNECTION = "DATABASE_CONNECTION",
   FILE_PROCESSING = "FILE_PROCESSING",
-  FIREBASE_OPERATION = "FIREBASE_OPERATION",
+  S3_OPERATION = "S3_OPERATION",
   FILE_UPLOAD = "FILE_UPLOAD",
   CONFIGURATION = "CONFIGURATION",
   CRYPTO_OPERATION = "CRYPTO_OPERATION",
@@ -220,14 +220,14 @@ export const handleFileError = (
     exitProcess
   )
 
-export const handleFirebaseError = (
+export const handleS3Error = (
   message: string,
   error?: Error,
   context?: any,
   exitProcess = false
 ) =>
   errorHandler.handleError(
-    ErrorType.FIREBASE_OPERATION,
+    ErrorType.S3_OPERATION,
     message,
     error,
     context,

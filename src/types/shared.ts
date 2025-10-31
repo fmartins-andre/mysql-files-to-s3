@@ -28,10 +28,6 @@ export interface CryptoConfig {
   key: string
 }
 
-export interface FirebaseServiceConfig {
-  [key: string]: string | number | boolean
-}
-
 export interface FileRetentionConfig {
   fileRetention: number
   defaultPrefix: string
@@ -57,22 +53,22 @@ export interface QueryResult {
   error: string | null
 }
 
-// Firebase types
-export interface FirebaseFile {
+// S3 types
+export interface S3File {
   name: string
-  getMetadata(): Promise<{ updated: string }>
-  delete(): Promise<void>
+  lastModified?: string
+  size?: number
 }
 
-export interface FirebaseFileList {
-  items: FirebaseFile[]
+export interface S3FileList {
+  items: S3File[]
 }
 
-export interface FirebaseData {
+export interface S3Data {
   retention: number
   prefix: string
-  ref: any // Firebase Storage reference
-  files: FirebaseFileList
+  client: any // S3/MinIO client
+  files: S3FileList
   filesNames: string[]
 }
 

@@ -1,4 +1,5 @@
 import { promises as fs } from "fs"
+import { Client } from "minio"
 import { encrypt } from "./utils/encrypt"
 
 interface LocalDataRow {
@@ -7,8 +8,9 @@ interface LocalDataRow {
   [key: string]: any
 }
 
-interface FirebaseData {
-  ref: any
+interface S3Data {
+  client: Client
+  bucket: string
   prefix: string
   filesNames: string[]
 }
@@ -22,10 +24,10 @@ interface UploadedFile {
 const uploadFiles = async (
   localData: LocalDataRow[],
   localFolder: string,
-  firebaseData: FirebaseData,
+  s3Data: S3Data,
   crypto_key: string
 ): Promise<UploadedFile[]> => {
-  const { ref, prefix, filesNames } = firebaseData
+  const { client, bucket, prefix, filesNames } = s3Data
 
   return new Promise(resolve => {
     const uploadedFiles: UploadedFile[] = []
@@ -39,9 +41,12 @@ const uploadFiles = async (
           await fs.access(localFilePath)
           const localFile = await fs.readFile(localFilePath)
 
-          const fileRef = ref.child(`${prefix}/${fileName}`)
-          await fileRef.put(Uint8Array.from(localFile))
-          const url = await fileRef.getDownloadURL()
+          // Upload file to MinIO/S3
+          const objectName = `${prefix}/${fileName}`
+          await client.putObject(bucket, objectName, localFile)
+
+          // Generate presigned URL for download (有效期1小时)
+          const url = await client.presignedGetObject(bucket, objectName, 3600)
 
           uploadedFiles.push({
             _id: row.id,
@@ -50,11 +55,11 @@ const uploadFiles = async (
           })
         }
       } catch (error) {
-        console.log(`::: Firebase : Error while uploading file: ${error}`)
+        console.log(`::: S3: Error while uploading file: ${error}`)
       }
       counter++
       if (counter === localData.length) {
-        console.log(`::: Firebase : All files were uploaded.`)
+        console.log(`::: S3: All files were uploaded.`)
         resolve(uploadedFiles)
       }
     })

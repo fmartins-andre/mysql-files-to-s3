@@ -1,6 +1,6 @@
 # mysql-files-to-s3
 
-A TypeScript-based microservice that uploads MySQL blob files to cloud storage (Firebase Storage/S3-compatible), processes them, and stores metadata in MongoDB Atlas.
+A TypeScript-based microservice that uploads MySQL blob files to S3-compatible cloud storage (MinIO), processes them, and stores metadata in MongoDB Atlas.
 
 ## Overview
 
@@ -9,14 +9,14 @@ This application is a modernized version of a file processing microservice that:
 - Retrieves blob data from MySQL databases
 - Converts data to RTF files using a predefined header template
 - Converts RTF files to PDF using LibreOffice
-- Uploads PDFs to cloud storage (Firebase Storage or S3-compatible services)
+- Uploads PDFs to S3-compatible cloud storage (MinIO)
 - Stores file metadata and encrypted URLs in MongoDB Atlas
 - Implements automatic file retention and cleanup policies
 
 ## Features
 
 - **TypeScript**: Full type safety and modern JavaScript features
-- **Cloud Storage**: Support for Firebase Storage and S3-compatible services
+- **Cloud Storage**: Support for S3-compatible services (MinIO)
 - **Database Support**: MySQL for source data, MongoDB Atlas for metadata storage
 - **File Processing**: Automated RTF to PDF conversion using LibreOffice
 - **Security**: Encrypted file URLs and secure cloud storage integration
@@ -28,7 +28,7 @@ This application is a modernized version of a file processing microservice that:
 - **Runtime**: Node.js 22+
 - **Language**: TypeScript 5.9+
 - **Database**: MySQL (source), MongoDB Atlas (metadata)
-- **Cloud Storage**: Firebase Storage / S3-compatible services
+- **Cloud Storage**: S3-compatible services (MinIO)
 - **File Processing**: LibreOffice (for RTF to PDF conversion)
 - **Build Tools**: TypeScript compiler, ts-node for development
 
@@ -116,29 +116,15 @@ The application uses a JSON configuration file to specify database connections, 
       }
     }
   },
-  "firebaseConfig": {
-    "apiKey": "your-api-key",
-    "authDomain": "your-project.firebaseapp.com",
-    "databaseURL": "https://your-project.firebaseio.com",
-    "projectId": "your-project-id",
-    "storageBucket": "your-project.appspot.com",
-    "messagingSenderId": "your-sender-id",
-    "appId": "your-app-id",
-    "measurementId": "your-measurement-id",
-    "defaultPrefix": "your-storage-folder",
-    "fileRetention": 30
-  },
-  "firebaseServiceAccount": {
-    "type": "service_account",
-    "project_id": "your-project",
-    "private_key_id": "your-private-key-id",
-    "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
-    "client_email": "firebase-adminsdk@your-project.iam.gserviceaccount.com",
-    "client_id": "your-client-id",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
+  "s3": {
+    "fileRetention": 30,
+    "defaultPrefix": "documents",
+    "bucket": "your-bucket-name",
+    "connectionParameters": {
+      "uri": "https://your-s3-endpoint.com",
+      "user": "your-access-key",
+      "password": "your-secret-key"
+    }
   }
 }
 ```
@@ -153,10 +139,11 @@ The application uses a JSON configuration file to specify database connections, 
   - `db`: Database name
   - `collection`: Collection name for storing file metadata
   - `connectionParameters`: MongoDB connection URI and options
-- **firebaseConfig**: Firebase configuration
-  - `defaultPrefix`: Storage folder/prefix for uploaded files
+- **s3**: S3 configuration for cloud storage
   - `fileRetention`: Days to keep files in cloud storage after local reference is lost
-- **firebaseServiceAccount**: Firebase Admin SDK service account credentials
+  - `defaultPrefix`: Storage folder/prefix for uploaded files
+  - `bucket`: S3 bucket name
+  - `connectionParameters`: S3 endpoint and credentials
 
 ## Usage
 
@@ -212,7 +199,7 @@ The application follows this processing pipeline:
 3. **File Creation**: Convert data to RTF files using predefined templates
 4. **Format Conversion**: Convert RTF files to PDF using LibreOffice
 5. **Local Cleanup**: Remove temporary RTF files
-6. **Cloud Upload**: Upload PDF files to Firebase Storage
+6. **Cloud Upload**: Upload PDF files to S3-compatible storage
 7. **Metadata Storage**: Save file metadata and encrypted URLs to MongoDB
 8. **Remote Cleanup**: Remove local PDF files
 9. **Retention Management**: Clean up outdated files from cloud storage
@@ -228,18 +215,18 @@ The application follows this processing pipeline:
 │   ├── utils/
 │   │   ├── index.ts            # Utility functions exports
 │   │   ├── daysBetweenDates.ts # Date utility functions
-│   │   ├── emptyFirebaseStorage.ts # Storage cleanup utilities
 │   │   ├── encrypt.ts          # Encryption utilities
 │   │   ├── errorHandler.ts     # Error handling patterns
 │   │   └── rtfHeaderRaw.ts     # RTF header template
 │   ├── cleanData.ts            # Data cleaning and validation
 │   ├── convertFiles.ts         # RTF to PDF conversion
 │   ├── deleteLocalFiles.ts     # Local file cleanup
-│   ├── firebaseData.ts         # Firebase Storage operations
 │   ├── getData.ts              # MySQL data retrieval
-│   ├── remoteFilesRetention.ts # Cloud storage retention management
+│   ├── remoteFilesRetention.ts # S3 storage retention management
 │   ├── saveLocalRtfFiles.ts    # RTF file creation
-│   └── sendResults.ts          # MongoDB result storage
+│   ├── sendResults.ts          # MongoDB result storage
+│   ├── s3Data.ts               # S3/MinIO storage operations
+│   └── uploadFiles.ts          # S3 file upload operations
 ├── dist/                       # Compiled JavaScript output
 ├── files/                      # Temporary file processing directory
 ├── package.json
@@ -314,11 +301,11 @@ All errors are logged to stdout with detailed context information.
 - Verify connection URI format
 - Ensure network connectivity
 
-**Firebase Storage upload fails**:
+**S3 upload fails**:
 
-- Verify service account credentials
-- Check storage bucket permissions
-- Ensure sufficient quota/limits
+- Verify S3 endpoint and credentials
+- Check bucket permissions and access policies
+- Ensure sufficient storage quota/limits
 
 ### Logs
 
