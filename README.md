@@ -1,54 +1,115 @@
-# mysql-files-to-firebase-str
+# mysql-files-to-s3
 
-A app/microservice to upload mysql blobs/files to google firebase storage and get its individual links and save the results objecto to MongoDB Atlas.
+A TypeScript-based microservice that uploads MySQL blob files to cloud storage (Firebase Storage/S3-compatible), processes them, and stores metadata in MongoDB Atlas.
 
-## How to install
+## Overview
 
-- `git clone ...`
-- `yarn install`
+This application is a modernized version of a file processing microservice that:
 
-#### Dependencies
+- Retrieves blob data from MySQL databases
+- Converts data to RTF files using a predefined header template
+- Converts RTF files to PDF using LibreOffice
+- Uploads PDFs to cloud storage (Firebase Storage or S3-compatible services)
+- Stores file metadata and encrypted URLs in MongoDB Atlas
+- Implements automatic file retention and cleanup policies
 
-- `mysql2`
-- `xhr2`
-- `firebase-admin`
-- `firebase`
-- `@firebase/app-types"`
-- `node-gzip`
-- `zlib`
-- `mongodb`
-- `crypto-js`
+## Features
 
-It already needs some other dependencies installed on the server/container
+- **TypeScript**: Full type safety and modern JavaScript features
+- **Cloud Storage**: Support for Firebase Storage and S3-compatible services
+- **Database Support**: MySQL for source data, MongoDB Atlas for metadata storage
+- **File Processing**: Automated RTF to PDF conversion using LibreOffice
+- **Security**: Encrypted file URLs and secure cloud storage integration
+- **Retention Management**: Automatic cleanup of outdated files
+- **Container Ready**: Docker support for easy deployment
 
-- `libreoffice-writer`: Version 6 or above, to convert the files;
-- `default-jre`: Needed by LibreOffice;
-- `ttf-liberation`: Fonts to assure compatibility.
+## Tech Stack
 
-## How it works
+- **Runtime**: Node.js 22+
+- **Language**: TypeScript 5.9+
+- **Database**: MySQL (source), MongoDB Atlas (metadata)
+- **Cloud Storage**: Firebase Storage / S3-compatible services
+- **File Processing**: LibreOffice (for RTF to PDF conversion)
+- **Build Tools**: TypeScript compiler, ts-node for development
 
-Just run it with a JSON configuration file and it's done!
+## Prerequisites
 
-#### Configuration file
+### System Dependencies
 
-```
+The application requires the following system packages to be installed:
+
+- **LibreOffice Writer**: Version 6 or above (for RTF to PDF conversion)
+- **OpenJDK Runtime Environment (JRE)**: Required by LibreOffice
+- **Liberation Fonts**: Ensures font compatibility across different systems
+
+### Node.js Dependencies
+
+The application includes the following runtime dependencies:
+
+```json
 {
-  "crypto_key": "KbPpimb@N4caximb0c49y$B&E)HcQWnZ",
+  "crypto-js": "^4.2.0",
+  "minio": "^8.0.6",
+  "mongodb": "^6.20.0",
+  "mysql2": "^3.15.3",
+  "node-gzip": "^1.1.2",
+  "typescript": "^5.9.3"
+}
+```
+
+Development dependencies include TypeScript types and build tools.
+
+## Installation
+
+1. **Clone the repository**:
+
+   ```bash
+   git clone <repository-url>
+   cd mysql-files-to-s3
+   ```
+
+2. **Install dependencies**:
+
+   ```bash
+   npm install
+   ```
+
+3. **System Dependencies** (Ubuntu/Debian):
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install libreoffice-writer default-jre ttf-liberation
+   ```
+
+4. **Build the application**:
+   ```bash
+   npm run build
+   ```
+
+## Configuration
+
+The application uses a JSON configuration file to specify database connections, cloud storage settings, and processing options.
+
+### Configuration File Structure
+
+```json
+{
+  "crypto_key": "your-secret-encryption-key",
   "mysql": {
-    "query": "SELECT 'HELLO WORD'",
+    "query": "SELECT your_blob_column FROM your_table",
     "connectionParameters": {
-      "host": "myhost",
-      "port": "3306",
-      "database": "mydatabase",
-      "user": "myusername",
-      "password": "mypassword"
+      "host": "your-mysql-host",
+      "port": 3306,
+      "database": "your-database",
+      "user": "your-username",
+      "password": "your-password"
     }
   },
   "mongo": {
-    "db": "my_db",
-    "collection": "my_collection",
+    "db": "your-database-name",
+    "collection": "your-collection-name",
     "connectionParameters": {
-      "uri": "mongodb+srv://myusername:mypassword@...",
+      "uri": "mongodb+srv://username:password@cluster.mongodb.net/",
       "options": {
         "useNewUrlParser": true,
         "useUnifiedTopology": true
@@ -56,80 +117,232 @@ Just run it with a JSON configuration file and it's done!
     }
   },
   "firebaseConfig": {
-    "apiKey": "AIza...",
-    "authDomain": "myproject...",
-    "databaseURL": "https://myproject...",
-    "projectId": "",
-    "storageBucket": "myproject...",
-    "messagingSenderId": "583...",
-    "appId": "1:583826...",
-    "measurementId": "G-LR...",
-    "defaultPrefix": "my_files_folder",
-    "fileRetention": 0
+    "apiKey": "your-api-key",
+    "authDomain": "your-project.firebaseapp.com",
+    "databaseURL": "https://your-project.firebaseio.com",
+    "projectId": "your-project-id",
+    "storageBucket": "your-project.appspot.com",
+    "messagingSenderId": "your-sender-id",
+    "appId": "your-app-id",
+    "measurementId": "your-measurement-id",
+    "defaultPrefix": "your-storage-folder",
+    "fileRetention": 30
   },
   "firebaseServiceAccount": {
     "type": "service_account",
-    "project_id": "myproject",
-    "private_key_id": "55bc766dcd34...",
-    "private_key": ...,
-    "client_email": "firebase-adminsdk...",
-    "client_id": "1129...",
+    "project_id": "your-project",
+    "private_key_id": "your-private-key-id",
+    "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+    "client_email": "firebase-adminsdk@your-project.iam.gserviceaccount.com",
+    "client_id": "your-client-id",
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/..."
+    "client_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
   }
 }
-
 ```
 
-- Section `crypto_key`: Secret key to be used do salt or cypher a message;
-- Section `mysql`: All the configurations related to MySQL, including the select statement;
-- Section `mongo`: All the connection parameters to the MongoDB Cloud instance;
-- Section `firebaseConfig`: All the parameters to work with Google Firebase. Get it from Firebase Config Panel;
-  - `defaultPrefix`: Firebase Storage folder to be used. It needs to be added manually here;
-  - `fileRetention`: when the local reference to the file is lost (no longer needed), how many days the file needs to be available on cloud.
-- Section `firebaseServiceAccount`: settings to authenticate Firebase. Get it from Firebase Config Panel.
+### Configuration Parameters
 
-You can pass a configuration file path as argument to the script. If called with no arguments, the script will try to load a file named `config.json` from it's same folder.
+- **crypto_key**: Secret key for encrypting URLs and sensitive data
+- **mysql**: MySQL database connection and query configuration
+  - `query`: SQL query to select blob data
+  - `connectionParameters`: MySQL connection details
+- **mongo**: MongoDB Atlas connection configuration
+  - `db`: Database name
+  - `collection`: Collection name for storing file metadata
+  - `connectionParameters`: MongoDB connection URI and options
+- **firebaseConfig**: Firebase configuration
+  - `defaultPrefix`: Storage folder/prefix for uploaded files
+  - `fileRetention`: Days to keep files in cloud storage after local reference is lost
+- **firebaseServiceAccount**: Firebase Admin SDK service account credentials
 
-#### How to run it
+## Usage
 
-- `yarn start`: it'll load the default configuration file path.
-- `yarn start path/to/my/config.json`: it'll load the given file.
+### Running the Application
 
-#### Docker
+**Development mode**:
 
-1. Build: `docker build -t mysql-files-to-firebase-str .`
-2. Run: `docker run --rm --mount type=bind,source="$(pwd)"/src/config.json,target=/app/src/config.json,readonly --mount type=bind,source="$(pwd)"/files,target=/app/files mysql-files-to-firebase-str`
+```bash
+npm run dev
+```
 
-###### Notes
+**Production mode**:
 
-- Give the container a name at the build time (`-t mysql-files-to-firebase-str`), it will make things easier to run afterwards.
-- Mount the configuration file at the run time (`type=bind,source="$(pwd)"/src/config.json,target=/app/src/config.json,readonly`) to make it work:
-  - On Linux or MacOS, the `$(pwd)` variable will expand to the current directory;
-  - Mount the configuration file to the default configuration path `/app/src/config.json`.
-  - You can pass a configuration path as argument, but you need to be sure you mounted the configuration file that matches this path.
+```bash
+npm run build
+npm start
+```
 
-## Scope
+**With custom configuration**:
 
-This app will:
+```bash
+npm start path/to/your/config.json
+```
 
-0. log every step to stdout;
-1. load a configuration file;
-2. get data from a MySQL database;
-3. clean up the data;
-4. save the data as RTF files;
-5. convert the RTF files to PDF;
-6. remove the RTF files;
-7. upload the PDF files to Firebase Storage;
-8. remove the PDF files;
-9. remove non needed files from Firebase Storage;
-10. save the results in the MongoDB Cloud instance.
+### Docker Deployment
 
-Nothing more, nothing less.
+1. **Build the Docker image**:
 
-## Why?
+   ```bash
+   docker build -t mysql-files-to-s3 .
+   ```
 
-I need something exactly like this to make some files available to download in a programmatic manner.
-The MonoDB part is a particular requisite cause the service that use these files already works wit MongoDB Cloud, so, it easier to me make it this way.
+2. **Run the container**:
+   ```bash
+   docker run --rm \
+     --mount type=bind,source="$(pwd)"/src/config.json,target=/app/src/config.json,readonly \
+     --mount type=bind,source="$(pwd)"/files,target=/app/files \
+     mysql-files-to-s3
+   ```
+
+**Docker Notes**:
+
+- The configuration file must be mounted to `/app/src/config.json`
+- The files directory should be mounted for temporary file processing
+- The container includes all necessary system dependencies
+
+## Application Workflow
+
+The application follows this processing pipeline:
+
+1. **Initialization**: Load configuration and validate connections
+2. **Data Retrieval**: Fetch blob data from MySQL database
+3. **File Creation**: Convert data to RTF files using predefined templates
+4. **Format Conversion**: Convert RTF files to PDF using LibreOffice
+5. **Local Cleanup**: Remove temporary RTF files
+6. **Cloud Upload**: Upload PDF files to Firebase Storage
+7. **Metadata Storage**: Save file metadata and encrypted URLs to MongoDB
+8. **Remote Cleanup**: Remove local PDF files
+9. **Retention Management**: Clean up outdated files from cloud storage
+10. **Final Results**: Store processing results in MongoDB
+
+## Project Structure
+
+```
+├── src/
+│   ├── index.ts                 # Main application entry point
+│   ├── types/
+│   │   └── shared.ts           # Shared TypeScript type definitions
+│   ├── utils/
+│   │   ├── index.ts            # Utility functions exports
+│   │   ├── daysBetweenDates.ts # Date utility functions
+│   │   ├── emptyFirebaseStorage.ts # Storage cleanup utilities
+│   │   ├── encrypt.ts          # Encryption utilities
+│   │   ├── errorHandler.ts     # Error handling patterns
+│   │   └── rtfHeaderRaw.ts     # RTF header template
+│   ├── cleanData.ts            # Data cleaning and validation
+│   ├── convertFiles.ts         # RTF to PDF conversion
+│   ├── deleteLocalFiles.ts     # Local file cleanup
+│   ├── firebaseData.ts         # Firebase Storage operations
+│   ├── getData.ts              # MySQL data retrieval
+│   ├── remoteFilesRetention.ts # Cloud storage retention management
+│   ├── saveLocalRtfFiles.ts    # RTF file creation
+│   └── sendResults.ts          # MongoDB result storage
+├── dist/                       # Compiled JavaScript output
+├── files/                      # Temporary file processing directory
+├── package.json
+├── tsconfig.json
+├── Dockerfile
+└── README.md
+```
+
+## Build Commands
+
+- `npm run build`: Compile TypeScript to JavaScript
+- `npm start`: Run the compiled application
+- `npm run dev`: Run in development mode with ts-node
+- `npm run clean`: Remove build artifacts
+- `npm run type-check`: Validate TypeScript types without compilation
+
+## Error Handling
+
+The application implements comprehensive error handling:
+
+- Database connection failures
+- File processing errors
+- Cloud storage upload failures
+- Configuration validation errors
+- Graceful shutdown on critical errors
+
+All errors are logged to stdout with detailed context information.
+
+## Security Considerations
+
+- **Encryption**: URLs are encrypted using crypto-js
+- **Secrets**: Sensitive configuration should be managed through environment variables in production
+- **Database Security**: Use connection pooling and prepared statements
+- **File Access**: Implement proper access controls for cloud storage
+
+## Development
+
+### Adding New Features
+
+1. Follow TypeScript strict mode requirements
+2. Add comprehensive JSDoc documentation
+3. Include proper error handling
+4. Update type definitions in `src/types/shared.ts`
+5. Add unit tests for new functionality
+
+### Code Quality
+
+- TypeScript strict mode enabled
+- No `any` types (except in rare, well-documented cases)
+- Comprehensive JSDoc comments
+- Consistent error handling patterns
+- Modular code organization
+
+## Troubleshooting
+
+### Common Issues
+
+**LibreOffice not found**:
+
+- Ensure LibreOffice is installed: `sudo apt-get install libreoffice-writer`
+- Verify JRE is installed: `java -version`
+
+**MySQL connection fails**:
+
+- Check connection parameters in configuration
+- Ensure MySQL server is accessible
+- Verify firewall settings
+
+**MongoDB connection issues**:
+
+- Check MongoDB Atlas IP whitelist
+- Verify connection URI format
+- Ensure network connectivity
+
+**Firebase Storage upload fails**:
+
+- Verify service account credentials
+- Check storage bucket permissions
+- Ensure sufficient quota/limits
+
+### Logs
+
+The application provides detailed logging throughout the process. Monitor stdout for:
+
+- Configuration loading status
+- Database connection results
+- File processing progress
+- Upload and cleanup operations
+- Error details and stack traces
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes with proper TypeScript typing
+4. Add tests for new functionality
+5. Update documentation
+6. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Author
+
+André Martins <fmartins.andre@gmail.com>

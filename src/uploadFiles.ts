@@ -1,16 +1,34 @@
 import { promises as fs } from "fs"
-import encrypt from "./utils/encrypt"
+import { encrypt } from "./utils/encrypt"
+
+interface LocalDataRow {
+  id: string | number
+  verification_code: string
+  [key: string]: any
+}
+
+interface FirebaseData {
+  ref: any
+  prefix: string
+  filesNames: string[]
+}
+
+interface UploadedFile {
+  _id: string | number
+  hash: string
+  encrypted_url: string
+}
 
 const uploadFiles = async (
-  localData,
-  localFolder,
-  firebaseData,
-  crypto_key
-) => {
+  localData: LocalDataRow[],
+  localFolder: string,
+  firebaseData: FirebaseData,
+  crypto_key: string
+): Promise<UploadedFile[]> => {
   const { ref, prefix, filesNames } = firebaseData
 
   return new Promise(resolve => {
-    const uploadedFiles = []
+    const uploadedFiles: UploadedFile[] = []
     let counter = 0
     localData.forEach(async row => {
       const fileName = `${row.id}.pdf`

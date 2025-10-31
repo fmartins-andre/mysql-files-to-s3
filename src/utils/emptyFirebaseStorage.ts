@@ -1,9 +1,12 @@
-global.XMLHttpRequest = require("xhr2")
-const fs = require("fs").promises
-const path = require("path")
-const firebaseData = require("../firebaseData")
+import * as fs from "fs/promises"
+import * as path from "path"
+const firebaseData = require("../firebaseData.js")
 
-const emptyFirebaseStorage = async () => {
+declare global {
+  var XMLHttpRequest: any
+}
+
+export const emptyFirebaseStorage = async (): Promise<void> => {
   try {
     const configFile =
       process.argv[2] || path.resolve(__dirname, "../config.json")
@@ -24,7 +27,7 @@ const emptyFirebaseStorage = async () => {
 
     let counter = 0
     if (filesLength > 0) {
-      remoteData.files.items.forEach(async file => {
+      for (const file of remoteData.files.items) {
         try {
           await file.delete()
           console.log(`${file.name}: deleted!`)
@@ -33,14 +36,14 @@ const emptyFirebaseStorage = async () => {
         }
         counter++
         if (counter === filesLength) finish()
-      })
+      }
     }
   } catch (error) {
     console.log(`ERROR: ${error}`)
   }
 }
 
-function finish() {
+function finish(): void {
   console.log(`All done!`)
   process.exit()
 }

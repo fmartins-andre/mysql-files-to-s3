@@ -1829,4 +1829,4 @@ fdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfefe
 fefefefefdfdfdfdfdfd030000000000
 }\\par`
 
-module.exports = rtfHeader
+export default rtfHeader

@@ -1,8 +1,38 @@
+// Firebase modules - using require due to potential typing issues
 const admin = require("firebase-admin")
 const firebase = require("firebase")
 require("firebase/storage")
 
-const firebaseData = async (firebaseConfig, firebaseServiceAccount) => {
+interface FirebaseConfig {
+  fileRetention: number
+  defaultPrefix: string
+  [key: string]: any
+}
+
+interface FirebaseServiceAccount {
+  [key: string]: any
+}
+
+interface FirebaseFile {
+  name: string
+  getMetadata(): Promise<any>
+  delete(): Promise<void>
+}
+
+interface FirebaseData {
+  retention: number
+  prefix: string
+  ref: any
+  files: {
+    items: FirebaseFile[]
+  }
+  filesNames: string[]
+}
+
+const firebaseData = async (
+  firebaseConfig: FirebaseConfig,
+  firebaseServiceAccount: FirebaseServiceAccount
+): Promise<FirebaseData> => {
   const { fileRetention, defaultPrefix, ...config } = firebaseConfig
 
   try {
@@ -10,7 +40,7 @@ const firebaseData = async (firebaseConfig, firebaseServiceAccount) => {
       ...config,
       credential: admin.credential.cert(firebaseServiceAccount),
     })
-    const data = {}
+    const data: FirebaseData = {} as FirebaseData
     data.retention = fileRetention
     data.prefix = defaultPrefix
     data.ref = firebase.storage().ref()
@@ -28,4 +58,4 @@ const firebaseData = async (firebaseConfig, firebaseServiceAccount) => {
   }
 }
 
-module.exports = firebaseData
+export = firebaseData

@@ -1,15 +1,21 @@
-global.XMLHttpRequest = require("xhr2")
-const fs = require("fs").promises
-const path = require("path")
+import { readFile } from "fs/promises"
+import path from "path"
 
-const firebaseData = require("./firebaseData")
-const getData = require("./getData")
-const convertFiles = require("./convertFiles")
-const uploadFiles = require("./uploadFiles")
-const remoteFilesRetention = require("./remoteFilesRetention")
-const deleteLocalFiles = require("./deleteLocalFiles")
-const saveLocalRtfFiles = require("./saveLocalRtfFiles")
-const sendResults = require("./sendResults")
+import firebaseData from "./firebaseData"
+import getData from "./getData"
+import convertFiles from "./convertFiles"
+import uploadFiles from "./uploadFiles"
+import remoteFileRetention from "./remoteFilesRetention"
+import deleteLocalFiles from "./deleteLocalFiles"
+import saveLocalRtfFiles from "./saveLocalRtfFiles"
+import sendResults from "./sendResults"
+
+// Type definitions
+interface UploadedFile {
+  _id: string | number
+  hash: string
+  encrypted_url: string
+}
 
 async function main() {
   console.log(`::: Application: Job started!`)
@@ -28,14 +34,9 @@ async function main() {
   )
 
   try {
-    const config = await fs.readFile(configFile, "utf-8")
-    const {
-      crypto_key,
-      mysql,
-      mongo,
-      firebaseConfig,
-      firebaseServiceAccount,
-    } = JSON.parse(config)
+    const config = await readFile(configFile, "utf-8")
+    const { crypto_key, mysql, mongo, firebaseConfig, firebaseServiceAccount } =
+      JSON.parse(config)
     console.log(`::: Application: Configuration file loaded.`)
 
     const remoteData = await firebaseData(
@@ -44,11 +45,14 @@ async function main() {
     )
 
     const mysqlData = await getData(mysql)
-    if (mysqlData.error) throw Error(mysqlData.error)
+    if (!mysqlData) {
+      throw new Error("Failed to retrieve data from MySQL")
+    }
+    if (mysqlData.error) throw Error(String(mysqlData.error))
 
     if (mysqlData.rows) {
       const mysqlRows = mysqlData.rows
-      let uploadedFiles = []
+      let uploadedFiles: UploadedFile[] = []
 
       const numLocalFiles = await saveLocalRtfFiles(
         mysqlRows,
@@ -68,7 +72,7 @@ async function main() {
         await deleteLocalFiles(localFolder, "pdf")
       }
 
-      const remoteFilesDeleted = await remoteFilesRetention(
+      const remoteFilesDeleted = await remoteFileRetention(
         mysqlRows,
         remoteData
       )

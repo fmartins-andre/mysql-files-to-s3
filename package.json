@@ -1,28 +1,53 @@
 {
   "name": "mysql-files-to-s3",
   "version": "1.0.0",
-  "description": "A app/micro-service to upload mysql blobs/files to any s3 compatible storage and get its individual links",
-  "main": "src/index.js",
+  "description": "A micro-service to upload MySQL blob files to S3-compatible storage and get individual links",
+  "main": "dist/index.js",
   "author": "André Martins <fmartins.andre@gmail.com>",
   "license": "MIT",
-  "scripts": {
-    "start": "node ."
-  },
+  "type": "module",
   "engines": {
-    "npm": "use-yarn",
-    "yarn": ">=1.22 <2",
-    "node": ">=22.21 <23"
+    "npm": "^11.6.0",
+    "node": "^22.21.0"
   },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "echo 'No linter configured'",
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": [
+    "mysql",
+    "s3",
+    "firebase",
+    "file-upload",
+    "typescript",
+    "microservice"
+  ],
   "dependencies": {
-    "crypto-js": "^4.0.0",
+    "crypto-js": "^4.2.0",
     "minio": "^8.0.6",
-    "mongodb": "^3.6.2",
-    "mysql2": "^2.1.0",
+    "mongodb": "^6.20.0",
+    "mysql2": "^3.15.3",
     "node-gzip": "^1.1.2",
-    "xhr2": "^0.2.0",
-    "zlib": "^1.0.5"
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "prettier": "^2.1.1"
-  }
+    "@types/crypto-js": "^4.2.2",
+    "@types/node": "^24.9.2",
+    "@types/mysql2": "^0.0.33",
+    "@types/mongodb": "^4.0.4",
+    "ts-node": "^10.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/mysql-files-to-s3.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/mysql-files-to-s3/issues"
+  },
+  "homepage": "https://github.com/your-username/mysql-files-to-s3#readme"
 }

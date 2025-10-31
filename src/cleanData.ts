@@ -1,6 +1,6 @@
-const rtfHeader = require("./utils/rtfHeaderRaw")
+import rtfHeader from "./utils/rtfHeaderRaw"
 
-const cleanData = _buffer_ => {
+const cleanData = (_buffer_: Buffer): string => {
   // The RTF files got from database not work well on linux!
   // They have some charset problems because the RTF version.
   // As I could not convert these files to any newer/compatible RTF version
@@ -22,4 +22,4 @@ const cleanData = _buffer_ => {
     .replace(/\{\\rtf.*/, "")}`
 }
 
-module.exports = cleanData
+export = cleanData
