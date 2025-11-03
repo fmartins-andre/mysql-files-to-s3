@@ -73,11 +73,11 @@ Development dependencies include TypeScript types and build tools.
    npm install
    ```
 
-3. **System Dependencies** (Ubuntu/Debian):
+3. **System Dependencies** (Debian Trixie):
 
    ```bash
    sudo apt-get update
-   sudo apt-get install libreoffice-writer default-jre ttf-liberation
+   sudo apt-get install libreoffice-writer default-jre fonts-liberation
    ```
 
 4. **Build the application**:
@@ -177,14 +177,14 @@ npm start path/to/your/config.json
 2. **Run the container**:
    ```bash
    docker run --rm \
-     --mount type=bind,source="$(pwd)"/src/config.json,target=/app/src/config.json,readonly \
+     --mount type=bind,source="$(pwd)"/config.json,target=/app/config.json,readonly \
      --mount type=bind,source="$(pwd)"/files,target=/app/files \
      mysql-files-to-s3
    ```
 
 **Docker Notes**:
 
-- The configuration file must be mounted to `/app/src/config.json`
+- The configuration file must be mounted to `/app/config.json`
 - The files directory should be mounted for temporary file processing
 - The container includes all necessary system dependencies
 

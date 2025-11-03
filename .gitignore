@@ -105,6 +105,8 @@ dist
 
 # Prevent to save config.json file
 src/config.json
+config.json
+
 
 # Prevent to save blob/files
 files/*

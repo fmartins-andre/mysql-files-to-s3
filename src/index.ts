@@ -18,8 +18,12 @@ import { UploadedFile } from "./types/shared.js"
 async function main() {
   console.log(`::: Application: Job started!`)
 
-  const configFile = process.argv[2] || path.resolve(__dirname, "config.json")
-  const localFolder = path.resolve(__dirname, "../files")
+  const configFile =
+    process.argv[2] || // from args
+    path.resolve(__dirname, "../config.json") || // from project root
+    path.resolve(__dirname, "./config.json") // from index folder
+
+  const localFolder = path.resolve(__dirname, "../files") // from project root
 
   if (process.argv[2])
     console.log(
