@@ -1,7 +1,12 @@
-import { exec } from "child_process"
+import { exec as execCallback } from "child_process"
+import { promisify } from "util"
+
+const exec = promisify(execCallback)
 
 const convertFiles = async (localFolder: string): Promise<void> => {
-  const { stdout: converter, stderr: noConverter } = await exec(`which soffice`)
+  const { stdout: converter, stderr: noConverter } = await exec(
+    `command -v soffice`
+  )
 
   if (noConverter) throw Error(`Could not find LibreOffice!`)
 

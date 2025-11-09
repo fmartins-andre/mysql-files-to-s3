@@ -1,10 +1,10 @@
-FROM node:jod-trixie
+FROM node:jod-alpine
 WORKDIR /app
 COPY package.json .
 COPY package-lock.json .
 COPY tsconfig.json .
 COPY src/ ./src
-RUN apt-get update && apt-get install -y --no-install-recommends default-jre libreoffice-writer fonts-liberation
+RUN apk add --no-cache openjdk21-jre-headless libreoffice-writer ttf-liberation
 RUN npm install -g npm
 RUN npm install
 RUN npm run build
