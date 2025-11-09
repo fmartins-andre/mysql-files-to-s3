@@ -42,10 +42,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/mysql-files-to-s3.git"
+    "url": "TODO: Add your repository URL"
   },
   "bugs": {
-    "url": "https://github.com/your-username/mysql-files-to-s3/issues"
+    "url": "TODO: Add your repository issues URL"
   },
-  "homepage": "https://github.com/your-username/mysql-files-to-s3#readme"
+  "homepage": "TODO: Add your repository homepage URL"
 }

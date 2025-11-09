@@ -22,9 +22,10 @@
     }
   },
   "s3": {
-    "fileRetention": 30,
-    "bucket": "your-bucket-name",
+    "fileRetention": 7,
+    "folder": "your-files-folder",
     "connectionParameters": {
+      "bucket": "your-bucket-name",
       "uri": "https://your-s3-endpoint.com",
       "user": "your-access-key",
       "password": "your-secret-key"

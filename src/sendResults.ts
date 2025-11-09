@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb"
+import { MongoClient, ObjectId } from "mongodb"
 
 interface MongoConfig {
   db: string
@@ -39,7 +39,7 @@ async function sendResults(
       await client
         .db(db)
         .collection(collection)
-        .deleteMany({ _id: { $in: dataToDelete } } as any)
+        .deleteMany({ _id: { $in: dataToDelete as unknown as ObjectId[] } })
       console.log(
         `::: MongoDB: Deleted ${dataToDelete.length} items from "${collection}" collection on "${db}" database!`
       )

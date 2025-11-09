@@ -1,8 +1,11 @@
-import mysql, { FieldPacket } from "mysql2/promise"
+import mysql, { FieldPacket, Connection } from "mysql2/promise"
 
 interface ConnectionParameters {
   database: string
   host: string
+  port?: number
+  user: string
+  password: string
   [key: string]: any
 }
 
@@ -19,10 +22,14 @@ async function getData({
   query: string
   connectionParameters: ConnectionParameters
 }): Promise<QueryResult | undefined> {
-  const { database, host } = connectionParameters
+  const { database, host, port = 3306, user } = connectionParameters
+  let connection: Connection | null = null
+
   try {
-    const connection = await mysql.createConnection(connectionParameters)
-    console.log(`::: MySQL: Connected to server "${host}"!`)
+    connection = await mysql.createConnection(connectionParameters)
+    console.log(
+      `::: MySQL: Connected to server "${host}:${port}" as user "${user}"!`
+    )
 
     const [rows, fields] = (await connection.execute(query)) as [
       any[],
@@ -37,7 +44,10 @@ async function getData({
     console.error(`::: MySQL: ERROR => ${error}`)
     return { rows: [], fields: [], error }
   } finally {
-    console.log(`::: MySQL: Disconnected from server "${host}"!`)
+    if (connection) {
+      await connection.end()
+      console.log(`::: MySQL: Disconnected from server "${host}:${port}"!`)
+    }
   }
 }
 

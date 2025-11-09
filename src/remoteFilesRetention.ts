@@ -22,20 +22,20 @@ interface FileDeletionRule {
 class FileRetentionProcessor {
   private readonly localFiles: Set<string>
   private readonly retentionDays: number
-  private readonly prefix: string
+  private readonly folder: string
   private readonly client: Client
   private readonly bucket: string
 
   constructor(
     localData: LocalDataRow[],
     retentionDays: number,
-    prefix: string,
+    folder: string,
     client: Client,
     bucket: string
   ) {
     this.localFiles = new Set(localData.map(row => `${row.id}.pdf`))
     this.retentionDays = retentionDays
-    this.prefix = prefix
+    this.folder = folder
     this.client = client
     this.bucket = bucket
   }
@@ -91,7 +91,7 @@ class FileRetentionProcessor {
    */
   private async deleteFile(file: { name: string }): Promise<string | null> {
     try {
-      const objectName = `${this.prefix}/${file.name}`
+      const objectName = `${this.folder}/${file.name}`
       await this.client.removeObject(this.bucket, objectName)
       console.log(
         `::: S3: The "${objectName}" file was removed from cloud storage.`
@@ -131,11 +131,11 @@ const remoteFileRetention = async (
   localData: LocalDataRow[],
   s3Data: S3Data
 ): Promise<string[]> => {
-  const { retention, prefix, files, client, bucket } = s3Data
+  const { retention, folder, files, client, bucket } = s3Data
   const processor = new FileRetentionProcessor(
     localData,
     retention,
-    prefix,
+    folder,
     client,
     bucket
   )
