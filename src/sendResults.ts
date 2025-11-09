@@ -46,12 +46,23 @@ async function sendResults(
     }
 
     if (qtyToAdd > 0 && dataToAdd) {
-      await client
+      // Create bulk operations to handle both new and existing documents
+      const bulkOperations = dataToAdd.map(doc => ({
+        replaceOne: {
+          filter: { _id: doc._id } as any,
+          replacement: doc,
+          upsert: true,
+        },
+      }))
+
+      const result = await client
         .db(db)
         .collection(collection)
-        .insertMany(dataToAdd as any, { ordered: false })
+        .bulkWrite(bulkOperations, { ordered: false })
+
       console.log(
-        `::: MongoDB: Inserted ${dataToAdd.length} items into "${collection}" collection on "${db}" database!`
+        `::: MongoDB: Processed ${dataToAdd.length} items into "${collection}" collection on "${db}" database! ` +
+          `(Upserted: ${result.upsertedCount}, Modified: ${result.modifiedCount})`
       )
     }
   } catch (error) {
