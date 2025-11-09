@@ -9,43 +9,50 @@ const uploadFiles = async (
   s3Data: S3Data,
   crypto_key: string
 ): Promise<UploadedFile[]> => {
-  const { client, bucket, prefix, filesNames } = s3Data
+  const { client, bucket, folder, filesNames, retention } = s3Data
+  const retentionInSeconds = retention * 24 * 60 * 60 // from days to seconds
+  const uploadedFiles: UploadedFile[] = []
 
-  return new Promise(resolve => {
-    const uploadedFiles: UploadedFile[] = []
-    let counter = 0
-    localData.forEach(async row => {
-      const fileName = `${row.id}.pdf`
-      const localFilePath = `${localFolder}/${fileName}`
+  // Process files sequentially to avoid overwhelming S3
+  for (const row of localData) {
+    const fileName = `${row.id}.pdf`
+    const localFilePath = `${localFolder}/${fileName}`
 
-      try {
-        if (!filesNames.includes(fileName)) {
-          await fs.access(localFilePath)
-          const localFile = await fs.readFile(localFilePath)
+    try {
+      if (!filesNames.includes(fileName)) {
+        // Check if file exists before processing
+        await fs.access(localFilePath)
+        const localFile = await fs.readFile(localFilePath)
 
-          // Upload file to MinIO/S3
-          const objectName = `${prefix}/${fileName}`
-          await client.putObject(bucket, objectName, localFile)
+        // Upload file to MinIO/S3
+        const objectName = `${folder}/${fileName}`
+        await client.putObject(bucket, objectName, localFile)
 
-          // Generate presigned URL for download (有效期1小时)
-          const url = await client.presignedGetObject(bucket, objectName, 3600)
+        // Generate presigned URL for download
+        const url = await client.presignedGetObject(
+          bucket,
+          objectName,
+          retentionInSeconds
+        )
 
-          uploadedFiles.push({
-            _id: row.id,
-            hash: `${encrypt("MD5", row.verification_code, crypto_key)}`,
-            encrypted_url: `${encrypt("AES", url, crypto_key)}`,
-          })
-        }
-      } catch (error) {
-        console.log(`::: S3: Error while uploading file: ${error}`)
+        uploadedFiles.push({
+          _id: row.id,
+          hash: `${encrypt("MD5", row.verification_code, crypto_key)}`,
+          encrypted_url: `${encrypt("AES", url, crypto_key)}`,
+        })
+
+        console.log(`::: S3: Successfully uploaded ${fileName}`)
       }
-      counter++
-      if (counter === localData.length) {
-        console.log(`::: S3: All files were uploaded.`)
-        resolve(uploadedFiles)
-      }
-    })
-  })
+    } catch (error) {
+      console.error(`::: S3: Error while uploading file ${fileName}:`, error)
+      // Continue with other files even if one fails
+    }
+  }
+
+  console.log(
+    `::: S3: Upload process completed. ${uploadedFiles.length} files uploaded.`
+  )
+  return uploadedFiles
 }
 
 export default uploadFiles
