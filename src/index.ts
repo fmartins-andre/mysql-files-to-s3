@@ -13,7 +13,7 @@ import remoteFileRetention from "./remoteFilesRetention.js"
 import deleteLocalFiles from "./deleteLocalFiles.js"
 import saveLocalRtfFiles from "./saveLocalRtfFiles.js"
 import sendResults from "./sendResults.js"
-import { UploadedFile } from "./types/shared.js"
+import { LocalDataRow, UploadedFile } from "./types/shared.js"
 
 async function main() {
   console.log(`::: Application: Job started!`)
@@ -49,7 +49,7 @@ async function main() {
     if (mysqlData.error) throw Error(String(mysqlData.error))
 
     if (mysqlData.rows) {
-      const mysqlRows = mysqlData.rows
+      const mysqlRows = mysqlData.rows as LocalDataRow[]
       let uploadedFiles: UploadedFile[] = []
 
       const numLocalFiles = await saveLocalRtfFiles(
