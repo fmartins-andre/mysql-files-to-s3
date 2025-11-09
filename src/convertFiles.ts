@@ -80,8 +80,6 @@ const convertFiles = async (
       }
 
       try {
-        console.log(`::: Application: Converting "${rtfFile}"...`)
-
         // Convert individual RTF file
         const { stderr: conversionErr } = await exec(
           `${converterPath} --headless --convert-to pdf --outdir ${localFolder} "${rtfPath}"`
@@ -131,7 +129,7 @@ const convertFiles = async (
     const afterFiles = await fs.readdir(localFolder)
     const pdfFiles = afterFiles.filter(file => file.endsWith(".pdf"))
 
-    console.log(`\n::: Application: CONVERSION SUMMARY`)
+    console.log(`::: Application: CONVERSION SUMMARY`)
     console.log(`::: Application: ======================`)
     console.log(
       `::: Application: Total RTF files processed: ${summary.totalFiles}`
@@ -143,7 +141,7 @@ const convertFiles = async (
     console.log(`::: Application: Total PDF files created: ${pdfFiles.length}`)
 
     if (summary.failed > 0) {
-      console.log(`\n::: Application: FAILED CONVERSIONS:`)
+      console.log(`::: Application: FAILED CONVERSIONS:`)
       summary.results
         .filter(result => !result.success)
         .forEach(result => {
@@ -154,16 +152,6 @@ const convertFiles = async (
           )
         })
     }
-
-    if (summary.successful > 0) {
-      console.log(`\n::: Application: SUCCESSFUL CONVERSIONS:`)
-      summary.results
-        .filter(result => result.success)
-        .forEach(result => {
-          console.log(`::: Application: - ${result.fileName}`)
-        })
-    }
-
     console.log(`::: Application: ======================\n`)
   } catch (error) {
     console.error(
