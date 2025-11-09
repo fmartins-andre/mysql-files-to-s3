@@ -19,6 +19,8 @@ const uploadFiles = async (
   const uploadedFiles: UploadedFile[] = []
   const filesWithError: FileWithError[] = []
 
+  console.log(`::: S3: Starting to upload the PDF files...`)
+
   // Process files sequentially to avoid overwhelming S3
   for (const row of localData) {
     const fileName = `${row.id}.pdf`
@@ -46,8 +48,6 @@ const uploadFiles = async (
           hash: `${encrypt("MD5", row.verification_code, crypto_key)}`,
           encrypted_url: `${encrypt("AES", url, crypto_key)}`,
         })
-
-        console.log(`::: S3: Successfully uploaded ${fileName}`)
       }
     } catch (error) {
       filesWithError.push({ name: fileName, error: String(error) })
