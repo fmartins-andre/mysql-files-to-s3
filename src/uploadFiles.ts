@@ -3,6 +3,11 @@ import { encrypt } from "./utils/encrypt.js"
 import { S3Data } from "./s3Data.js"
 import { LocalDataRow, UploadedFile } from "./types/shared.js"
 
+type FileWithError = {
+  name: string
+  error: string
+}
+
 const uploadFiles = async (
   localData: LocalDataRow[],
   localFolder: string,
@@ -12,6 +17,7 @@ const uploadFiles = async (
   const { client, bucket, folder, filesNames, retention } = s3Data
   const retentionInSeconds = retention * 24 * 60 * 60 // from days to seconds
   const uploadedFiles: UploadedFile[] = []
+  const filesWithError: FileWithError[] = []
 
   // Process files sequentially to avoid overwhelming S3
   for (const row of localData) {
@@ -44,14 +50,20 @@ const uploadFiles = async (
         console.log(`::: S3: Successfully uploaded ${fileName}`)
       }
     } catch (error) {
-      console.error(`::: S3: Error while uploading file ${fileName}:`, error)
-      // Continue with other files even if one fails
+      filesWithError.push({ name: fileName, error: String(error) })
     }
   }
 
   console.log(
-    `::: S3: Upload process completed. ${uploadedFiles.length} files uploaded.`
+    `::: S3: Upload process completed. ${uploadedFiles.length} files uploaded. ${filesWithError.length} files failed.`
   )
+  if (filesWithError.length > 0) {
+    filesWithError.forEach((file, i) => {
+      console.log(
+        `::: S3: --- ${i + 1}: ${file.name} failed due ${file.error}.`
+      )
+    })
+  }
   return uploadedFiles
 }
 
